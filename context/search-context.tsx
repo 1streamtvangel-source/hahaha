@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useReducer, useRef, type ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useReducer, useRef, type ReactNode } from 'react';
 import { FilterState, SortConfig, SortField } from '@/types/filters';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
@@ -37,19 +37,16 @@ function searchReducer(state: SearchState, action: SearchAction): SearchState {
     case 'SET_FILTERS':
       return { ...state, filters: { ...state.filters, ...action.payload } };
 
-    case 'SET_SORT':
+    case 'SET_SORT': {
+      const toggleDirection =
+        state.sortConfig.field === action.payload.field
+          ? state.sortConfig.direction === 'asc' ? 'desc' : 'asc'
+          : 'asc';
       return {
         ...state,
-        sortConfig: {
-          field: action.payload.field,
-          direction:
-            state.sortConfig.field === action.payload.field
-              ? state.sortConfig.direction === 'asc'
-                ? 'desc'
-                : 'asc'
-              : 'asc',
-        },
+        sortConfig: { field: action.payload.field, direction: toggleDirection as 'asc' | 'desc' },
       };
+    }
 
     case 'TOGGLE_SORT_DIRECTION':
       return {
@@ -85,8 +82,14 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     filterSheetRef.current?.present();
   }, []);
 
+  // Memoize context value to prevent unnecessary consumer re-renders
+  const value = useMemo<SearchContextValue>(
+    () => ({ state, dispatch, filterSheetRef, openFilterSheet }),
+    [state, openFilterSheet]
+  );
+
   return (
-    <SearchContext.Provider value={{ state, dispatch, filterSheetRef, openFilterSheet }}>
+    <SearchContext.Provider value={value}>
       {children}
     </SearchContext.Provider>
   );
