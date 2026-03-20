@@ -1,4 +1,5 @@
-import { StyleSheet, FlatList, View } from 'react-native';
+import { StyleSheet, FlatList, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import React from 'react';
 import { CompanyRecord } from '@/types/company';
 import { CompanyCard } from './company-card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -8,11 +9,14 @@ interface CompanyListProps {
   companies: CompanyRecord[];
   isSearching?: boolean;
   header?: React.ReactElement;
+  listRef?: React.RefObject<FlatList | null>;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }
 
-export function CompanyList({ companies, isSearching, header }: CompanyListProps) {
+export function CompanyList({ companies, isSearching, header, listRef, onScroll }: CompanyListProps) {
   return (
     <FlatList
+      ref={listRef}
       data={companies}
       keyExtractor={(item) => item.id}
       renderItem={({ item, index }) => <CompanyCard company={item} index={index} />}
@@ -29,6 +33,8 @@ export function CompanyList({ companies, isSearching, header }: CompanyListProps
       }
       showsVerticalScrollIndicator={false}
       keyboardDismissMode="on-drag"
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     />
   );
 }
