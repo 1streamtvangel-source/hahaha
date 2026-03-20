@@ -1,18 +1,18 @@
-import { StyleSheet, View, Pressable, FlatList } from 'react-native';
-import { useCallback, useRef } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { useSearchContext } from '@/context/search-context';
-import { useCompanySearch } from '@/hooks/use-company-search';
-import { useListAnimations } from '@/hooks/use-list-animations';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { SearchBar } from '@/components/ui/search-bar';
 import { CompanyList } from '@/components/company/company-list';
 import { ActiveFiltersBar } from '@/components/filters/active-filters-bar';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Spacing, Shadows } from '@/constants/layout';
+import { SearchBar } from '@/components/ui/search-bar';
+import { Shadows, Spacing } from '@/constants/layout';
+import { useSearchContext } from '@/context/search-context';
+import { useCompanySearch } from '@/hooks/use-company-search';
+import { useListAnimations } from '@/hooks/use-list-animations';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import * as Haptics from 'expo-haptics';
+import { useCallback, useRef } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -119,7 +119,7 @@ export default function SearchScreen() {
 
       {/* Floating Actions: scroll-to-top (left) + filter pill (right) */}
       <Animated.View
-        style={[styles.fab, styles.fabLeft, { bottom: insets.bottom + 70 }, scrollTopAnimatedStyle]}
+        style={[styles.fab, styles.fabLeft, { bottom: insets.bottom + 30 }, scrollTopAnimatedStyle]}
       >
         <Pressable
           style={[styles.fabButton, { backgroundColor: accentColor }]}
@@ -129,7 +129,7 @@ export default function SearchScreen() {
         </Pressable>
       </Animated.View>
 
-      <View style={[styles.fab, styles.fabRight, { bottom: insets.bottom + 70 }]}>
+      <View style={[styles.fab, styles.fabRight, { bottom: insets.bottom + 30 }]}>
         <AnimatedPressable
           style={[styles.filterPill, { backgroundColor: accentColor }, filterPillAnimatedStyle]}
           onPress={openFilters}

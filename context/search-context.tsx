@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useReducer, useRef, type ReactNode } from 'react';
-import { FilterState, SortConfig, SortField, SortDirection } from '@/types/filters';
-import BottomSheet from '@gorhom/bottom-sheet';
+import { FilterState, SortConfig, SortField } from '@/types/filters';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 interface SearchState {
   query: string;
@@ -12,7 +12,6 @@ type SearchAction =
   | { type: 'SET_QUERY'; payload: string }
   | { type: 'SET_FILTERS'; payload: Partial<FilterState> }
   | { type: 'SET_SORT'; payload: { field: SortField } }
-  | { type: 'SET_SORT_DIRECTION'; payload: SortDirection }
   | { type: 'TOGGLE_SORT_DIRECTION' }
   | { type: 'RESET_FILTERS' }
   | { type: 'CLEAR_ALL' };
@@ -52,12 +51,6 @@ function searchReducer(state: SearchState, action: SearchAction): SearchState {
         },
       };
 
-    case 'SET_SORT_DIRECTION':
-      return {
-        ...state,
-        sortConfig: { ...state.sortConfig, direction: action.payload },
-      };
-
     case 'TOGGLE_SORT_DIRECTION':
       return {
         ...state,
@@ -78,7 +71,7 @@ function searchReducer(state: SearchState, action: SearchAction): SearchState {
 interface SearchContextValue {
   state: SearchState;
   dispatch: React.Dispatch<SearchAction>;
-  filterSheetRef: React.RefObject<BottomSheet | null>;
+  filterSheetRef: React.RefObject<BottomSheetModal | null>;
   openFilterSheet: () => void;
 }
 
@@ -86,10 +79,10 @@ const SearchContext = createContext<SearchContextValue | null>(null);
 
 export function SearchProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(searchReducer, initialState);
-  const filterSheetRef = useRef<BottomSheet>(null);
+  const filterSheetRef = useRef<BottomSheetModal>(null);
 
   const openFilterSheet = useCallback(() => {
-    filterSheetRef.current?.snapToIndex(0);
+    filterSheetRef.current?.present();
   }, []);
 
   return (

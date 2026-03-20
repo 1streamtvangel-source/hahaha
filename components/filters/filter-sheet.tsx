@@ -1,7 +1,8 @@
-import { StyleSheet, View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable, Platform } from 'react-native';
 import { useCallback, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import { FullWindowOverlay } from 'react-native-screens';
 import { useSearchContext, defaultFilters } from '@/context/search-context';
 import { useFilterOptions } from '@/hooks/use-filter-options';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -14,8 +15,12 @@ import { RadioGroup } from '@/components/ui/radio-group';
 import { RangeSlider } from '@/components/ui/range-slider';
 import { Spacing, BorderRadius } from '@/constants/layout';
 
+const ContainerComponent = (Platform.OS === 'ios'
+  ? FullWindowOverlay
+  : ({ children }: { children?: React.ReactNode }) => <>{children}</>) as React.ComponentType<React.PropsWithChildren>;
+
 interface FilterSheetProps {
-  sheetRef: React.RefObject<BottomSheet | null>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
 }
 
 export function FilterSheet({ sheetRef }: FilterSheetProps) {
@@ -86,19 +91,28 @@ export function FilterSheet({ sheetRef }: FilterSheetProps) {
 
   const handleApply = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    sheetRef.current?.close();
+    sheetRef.current?.dismiss();
   }, [sheetRef]);
 
   const handleClose = useCallback(() => {
-    sheetRef.current?.close();
+    sheetRef.current?.dismiss();
   }, [sheetRef]);
 
+  const renderBackdrop = useCallback(
+    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
+      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.5} />
+    ),
+    []
+  );
+
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={sheetRef}
-      index={-1}
       snapPoints={snapPoints}
+      enableDynamicSizing={false}
       enablePanDownToClose
+      containerComponent={ContainerComponent}
+      backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: bgColor }}
       handleIndicatorStyle={{ backgroundColor: handleColor, width: 40 }}
     >
@@ -184,7 +198,7 @@ export function FilterSheet({ sheetRef }: FilterSheetProps) {
           </ThemedText>
         </Pressable>
       </View>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 }
 

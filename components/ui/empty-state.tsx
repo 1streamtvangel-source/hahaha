@@ -1,13 +1,13 @@
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Spacing } from '@/constants/layout';
 
 interface EmptyStateProps {
   title?: string;
   subtitle?: string;
-  icon?: string;
+  icon?: IconSymbolName;
 }
 
 export function EmptyState({
@@ -19,7 +19,7 @@ export function EmptyState({
 
   return (
     <View style={styles.container}>
-      <IconSymbol name={icon as never} size={48} color={iconColor} />
+      <IconSymbol name={icon} size={48} color={iconColor} />
       <ThemedText type="subtitle" style={styles.title}>
         {title}
       </ThemedText>
