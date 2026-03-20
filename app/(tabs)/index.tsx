@@ -1,98 +1,166 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { StyleSheet, View, Pressable } from 'react-native';
+import { useRef, useCallback } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import BottomSheet from '@gorhom/bottom-sheet';
+import * as Haptics from 'expo-haptics';
+import { useSearchContext } from '@/context/search-context';
+import { useCompanySearch } from '@/hooks/use-company-search';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { SearchBar } from '@/components/ui/search-bar';
+import { SortButton } from '@/components/ui/sort-button';
+import { CompanyList } from '@/components/company/company-list';
+import { ActiveFiltersBar } from '@/components/filters/active-filters-bar';
+import { FilterSheet } from '@/components/filters/filter-sheet';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Spacing, BorderRadius, Shadows } from '@/constants/layout';
+import { SortField } from '@/types/filters';
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+export default function SearchScreen() {
+  const { state, dispatch } = useSearchContext();
+  const {
+    results,
+    totalCount,
+    resultCount,
+    isSearching,
+    hasActiveSearch,
+    hasActiveFilters,
+  } = useCompanySearch();
+  const sheetRef = useRef<BottomSheet>(null);
+  const bgColor = useThemeColor({}, 'background');
+  const accentColor = useThemeColor({}, 'accent');
+
+  const handleQueryChange = useCallback(
+    (text: string) => dispatch({ type: 'SET_QUERY', payload: text }),
+    [dispatch]
+  );
+
+  const handleSortField = useCallback(
+    (field: SortField) => dispatch({ type: 'SET_SORT', payload: { field } }),
+    [dispatch]
+  );
+
+  const handleToggleDirection = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    dispatch({ type: 'TOGGLE_SORT_DIRECTION' });
+  }, [dispatch]);
+
+  const openFilters = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    sheetRef.current?.snapToIndex(0);
+  }, []);
+
+  const handleClearAll = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    dispatch({ type: 'CLEAR_ALL' });
+  }, [dispatch]);
+
+  // Build status text
+  const isFiltered = hasActiveSearch || hasActiveFilters;
+
+  const header = (
+    <View style={styles.headerSection}>
+      <SearchBar value={state.query} onChangeText={handleQueryChange} />
+      <ActiveFiltersBar />
+      <View style={styles.toolbar}>
+        <SortButton
+          field={state.sortConfig.field}
+          direction={state.sortConfig.direction}
+          onSelectField={handleSortField}
+          onToggleDirection={handleToggleDirection}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+        <View style={styles.countRow}>
+          <ThemedText style={styles.count} lightColor="#9BA1A6" darkColor="#687076">
+            {isFiltered
+              ? `${resultCount} result${resultCount !== 1 ? 's' : ''}`
+              : `${totalCount} companies`}
+          </ThemedText>
+          {isFiltered && (
+            <Pressable onPress={handleClearAll} hitSlop={8}>
+              <ThemedText style={[styles.clearAll, { color: accentColor }]}>
+                Clear all
+              </ThemedText>
+            </Pressable>
+          )}
+        </View>
+      </View>
+    </View>
+  );
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
+  return (
+    <SafeAreaView style={[styles.screen, { backgroundColor: bgColor }]} edges={['top']}>
+      <View style={styles.titleRow}>
+        <ThemedText type="title" style={styles.title}>
+          Search
         </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+      <CompanyList companies={results} isSearching={isSearching} header={header} />
+
+      <Pressable
+        style={[styles.fab, { backgroundColor: accentColor }, Shadows.lg]}
+        onPress={openFilters}
+      >
+        <IconSymbol name="line.3.horizontal.decrease" size={20} color="#FFFFFF" />
+        {hasActiveFilters && <View style={styles.fabDot} />}
+      </Pressable>
+
+      <FilterSheet sheetRef={sheetRef} />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  screen: {
+    flex: 1,
+  },
+  titleRow: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
+  },
+  title: {
+    fontSize: 28,
+  },
+  headerSection: {
+    gap: Spacing.md,
+    paddingBottom: Spacing.lg,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  countRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  count: {
+    fontSize: 13,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  clearAll: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  fab: {
     position: 'absolute',
+    bottom: 90,
+    right: Spacing.xl,
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#EF4444',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
 });
