@@ -9,6 +9,7 @@ const SIZE_ORDER: Record<CompanySize, number> = {
   Large: 2,
 };
 
+/** Financials are ordered by year descending; index 0 is the most recent. */
 function getLatestRevenue(record: CompanyRecord): number {
   return record.financials[0]?.revenue ?? 0;
 }
@@ -17,6 +18,13 @@ function getLatestNetIncome(record: CompanyRecord): number {
   return record.financials[0]?.net_income ?? 0;
 }
 
+/**
+ * Returns a comparator function for the given sort field.
+ * String fields use locale-aware comparison. Numeric fields use subtraction.
+ * Size uses a defined ordinal mapping (Small < Medium < Large).
+ *
+ * All comparators are O(1) per call.
+ */
 export function getComparator(field: SortField): Comparator {
   switch (field) {
     case 'name':

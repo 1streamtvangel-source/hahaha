@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
-import { useSearchContext } from '@/context/search-context';
+import { useSearchContext, defaultFilters } from '@/context/search-context';
 import { useDebouncedValue } from './use-debounced-value';
 import { processCompanies } from '@/utils/filter/pipeline';
 import { companies } from '@/data/companies';
 import { CompanyRecord } from '@/types/company';
-import { defaultFilters } from '@/context/search-context';
 
 interface UseCompanySearchResult {
   results: CompanyRecord[];

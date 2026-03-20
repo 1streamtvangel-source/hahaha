@@ -1,5 +1,6 @@
 import { Token, RangeOperator } from '@/types/search';
 
+// Ordered longest-first so >= is checked before >
 const RANGE_OPERATORS: RangeOperator[] = ['>=', '<=', '>', '<'];
 
 const KNOWN_FIELDS = new Set([
@@ -16,6 +17,11 @@ const KNOWN_FIELDS = new Set([
   'ticker',
 ]);
 
+/**
+ * Tokenizes a raw search query string into typed tokens.
+ * Supports: "exact phrases", field:value, field>=number, and free text.
+ * Time: O(n) where n = input length.
+ */
 export function tokenize(input: string): Token[] {
   const trimmed = input.trim();
   if (!trimmed) return [];
@@ -31,23 +37,23 @@ export function tokenize(input: string): Token[] {
   return tokens;
 }
 
+/**
+ * Splits input by whitespace while preserving quoted phrases as single segments.
+ * Handles unclosed quotes gracefully by treating them as free text.
+ */
 function splitPreservingQuotes(input: string): string[] {
   const segments: string[] = [];
   let current = '';
   let inQuote = false;
 
-  for (let i = 0; i < input.length; i++) {
-    const char = input[i];
-
+  for (const char of input) {
     if (char === '"') {
       if (inQuote) {
-        // Close quote — push entire quoted string including quotes
         current += '"';
         segments.push(current);
         current = '';
         inQuote = false;
       } else {
-        // Start quote — if there's accumulated text, push it first
         if (current.trim()) {
           segments.push(current.trim());
         }
@@ -64,10 +70,9 @@ function splitPreservingQuotes(input: string): string[] {
     }
   }
 
-  // Remaining text
   if (current.trim()) {
     if (inQuote) {
-      // Unclosed quote — treat as free text, strip the leading quote
+      // Unclosed quote — treat content as free text
       const text = current.replace(/^"/, '').trim();
       if (text) segments.push(text);
     } else {
@@ -78,6 +83,10 @@ function splitPreservingQuotes(input: string): string[] {
   return segments;
 }
 
+/**
+ * Parses a single segment into a typed Token.
+ * Checks in order: exact match → range query → field match → free text.
+ */
 function parseSegment(segment: string): Token | null {
   // Exact match: "quoted phrase"
   if (segment.startsWith('"') && segment.endsWith('"') && segment.length > 2) {
@@ -87,6 +96,7 @@ function parseSegment(segment: string): Token | null {
   }
 
   // Range query: field>=value, field>value, etc.
+  // RANGE_OPERATORS is ordered longest-first so >= matches before >
   for (const op of RANGE_OPERATORS) {
     const idx = segment.indexOf(op);
     if (idx > 0) {
@@ -94,7 +104,7 @@ function parseSegment(segment: string): Token | null {
       const rawValue = segment.slice(idx + op.length);
       const numValue = Number(rawValue);
 
-      if (KNOWN_FIELDS.has(field) && !isNaN(numValue) && rawValue !== '') {
+      if (KNOWN_FIELDS.has(field) && !Number.isNaN(numValue) && rawValue !== '') {
         return { type: 'range_query', field, operator: op, value: numValue };
       }
     }
