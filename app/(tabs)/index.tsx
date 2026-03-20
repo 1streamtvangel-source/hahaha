@@ -1,7 +1,6 @@
 import { StyleSheet, View, Pressable } from 'react-native';
-import { useRef, useCallback } from 'react';
+import { useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BottomSheet from '@gorhom/bottom-sheet';
 import * as Haptics from 'expo-haptics';
 import { useSearchContext } from '@/context/search-context';
 import { useCompanySearch } from '@/hooks/use-company-search';
@@ -10,14 +9,13 @@ import { SearchBar } from '@/components/ui/search-bar';
 import { SortButton } from '@/components/ui/sort-button';
 import { CompanyList } from '@/components/company/company-list';
 import { ActiveFiltersBar } from '@/components/filters/active-filters-bar';
-import { FilterSheet } from '@/components/filters/filter-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Spacing, BorderRadius, Shadows } from '@/constants/layout';
 import { SortField } from '@/types/filters';
 
 export default function SearchScreen() {
-  const { state, dispatch } = useSearchContext();
+  const { state, dispatch, openFilterSheet } = useSearchContext();
   const {
     results,
     totalCount,
@@ -26,7 +24,6 @@ export default function SearchScreen() {
     hasActiveSearch,
     hasActiveFilters,
   } = useCompanySearch();
-  const sheetRef = useRef<BottomSheet>(null);
   const bgColor = useThemeColor({}, 'background');
   const accentColor = useThemeColor({}, 'accent');
 
@@ -47,15 +44,14 @@ export default function SearchScreen() {
 
   const openFilters = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    sheetRef.current?.snapToIndex(0);
-  }, []);
+    openFilterSheet();
+  }, [openFilterSheet]);
 
   const handleClearAll = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     dispatch({ type: 'CLEAR_ALL' });
   }, [dispatch]);
 
-  // Build status text
   const isFiltered = hasActiveSearch || hasActiveFilters;
 
   const header = (
@@ -103,8 +99,6 @@ export default function SearchScreen() {
         <IconSymbol name="line.3.horizontal.decrease" size={20} color="#FFFFFF" />
         {hasActiveFilters && <View style={styles.fabDot} />}
       </Pressable>
-
-      <FilterSheet sheetRef={sheetRef} />
     </SafeAreaView>
   );
 }

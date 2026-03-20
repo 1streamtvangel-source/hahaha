@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { SearchProvider } from '@/context/search-context';
+import { RootFilterSheet } from '@/components/filters/root-filter-sheet';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -28,6 +29,7 @@ export default function RootLayout() {
               }}
             />
           </Stack>
+          <RootFilterSheet />
         </SearchProvider>
         <StatusBar style="auto" />
       </ThemeProvider>

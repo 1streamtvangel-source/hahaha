@@ -21,16 +21,16 @@ interface FilterSheetProps {
 export function FilterSheet({ sheetRef }: FilterSheetProps) {
   const { state, dispatch } = useSearchContext();
   const options = useFilterOptions();
-  const snapPoints = useMemo(() => ['65%', '90%'], []);
+  const snapPoints = useMemo(() => ['90%'], []);
 
   const bgColor = useThemeColor({}, 'background');
   const handleColor = useThemeColor({}, 'textTertiary');
   const accentColor = useThemeColor({}, 'accent');
   const cardBg = useThemeColor({}, 'backgroundSecondary');
+  const borderColor = useThemeColor({}, 'border');
 
   const { filters } = state;
 
-  // Count active filters for the badge
   const activeCount =
     filters.industries.length +
     filters.sizes.length +
@@ -84,8 +84,12 @@ export function FilterSheet({ sheetRef }: FilterSheetProps) {
     dispatch({ type: 'RESET_FILTERS' });
   }, [dispatch]);
 
-  const handleDone = useCallback(() => {
+  const handleApply = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    sheetRef.current?.close();
+  }, [sheetRef]);
+
+  const handleClose = useCallback(() => {
     sheetRef.current?.close();
   }, [sheetRef]);
 
@@ -98,26 +102,19 @@ export function FilterSheet({ sheetRef }: FilterSheetProps) {
       backgroundStyle={{ backgroundColor: bgColor }}
       handleIndicatorStyle={{ backgroundColor: handleColor, width: 40 }}
     >
-      <BottomSheetScrollView contentContainerStyle={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={handleReset} hitSlop={8} style={styles.resetButton}>
-            <IconSymbol name="xmark" size={12} color={accentColor} />
-            <ThemedText style={[styles.resetText, { color: accentColor }]}>
-              Reset
-            </ThemedText>
-          </Pressable>
-          <Pressable
-            style={[styles.applyButton, { backgroundColor: accentColor }]}
-            onPress={handleDone}
-          >
-            <ThemedText style={styles.applyButtonText}>
-              Apply{activeCount > 0 ? ` (${activeCount})` : ''}
-            </ThemedText>
-          </Pressable>
-        </View>
+      {/* Sticky Header */}
+      <View style={[styles.header, { borderBottomColor: borderColor }]}>
+        <View style={styles.headerSpacer} />
+        <ThemedText type="defaultSemiBold" style={styles.headerTitle}>
+          Filters
+        </ThemedText>
+        <Pressable onPress={handleClose} hitSlop={8} style={styles.closeButton}>
+          <IconSymbol name="xmark" size={16} color={accentColor} />
+        </Pressable>
+      </View>
 
-        {/* Industry */}
+      {/* Scrollable Filter Content */}
+      <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
         <View style={[styles.sectionCard, { backgroundColor: cardBg }]}>
           <FilterSection title="Industry" count={filters.industries.length}>
             <ChipSelector
@@ -128,7 +125,6 @@ export function FilterSheet({ sheetRef }: FilterSheetProps) {
           </FilterSection>
         </View>
 
-        {/* Revenue Range */}
         <View style={[styles.sectionCard, { backgroundColor: cardBg }]}>
           <FilterSection title="Revenue Range">
             <RangeSlider
@@ -149,7 +145,6 @@ export function FilterSheet({ sheetRef }: FilterSheetProps) {
           </FilterSection>
         </View>
 
-        {/* Size & Type side by side */}
         <View style={styles.row}>
           <View style={[styles.sectionCard, styles.halfCard, { backgroundColor: cardBg }]}>
             <FilterSection title="Size" count={filters.sizes.length}>
@@ -171,43 +166,56 @@ export function FilterSheet({ sheetRef }: FilterSheetProps) {
             </FilterSection>
           </View>
         </View>
-
       </BottomSheetScrollView>
+
+      {/* Sticky Footer */}
+      <View style={[styles.footer, { borderTopColor: borderColor, backgroundColor: bgColor }]}>
+        <Pressable onPress={handleReset} style={[styles.resetButton, { borderColor }]}>
+          <ThemedText style={[styles.resetText, { color: accentColor }]}>
+            Reset
+          </ThemedText>
+        </Pressable>
+        <Pressable
+          style={[styles.applyButton, { backgroundColor: accentColor }]}
+          onPress={handleApply}
+        >
+          <ThemedText style={styles.applyButtonText}>
+            Apply{activeCount > 0 ? ` (${activeCount})` : ''}
+          </ThemedText>
+        </Pressable>
+      </View>
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding: Spacing.xl,
-    gap: Spacing.lg,
-    paddingBottom: 60,
-  },
   header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  resetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-  },
-  resetText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  applyButton: {
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm + 2,
     paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.lg,
+    borderBottomWidth: 1,
   },
-  applyButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+  headerSpacer: {
+    width: 32,
+  },
+  headerTitle: {
+    fontSize: 17,
+    textAlign: 'center',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollContent: {
+    padding: Spacing.xl,
+    gap: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   sectionCard: {
     borderRadius: BorderRadius.lg,
@@ -219,5 +227,35 @@ const styles = StyleSheet.create({
   },
   halfCard: {
     flex: 1,
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+    borderTopWidth: 1,
+  },
+  resetButton: {
+    flex: 1,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+    paddingVertical: Spacing.md + 2,
+    alignItems: 'center',
+  },
+  resetText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  applyButton: {
+    flex: 2,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.md + 2,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

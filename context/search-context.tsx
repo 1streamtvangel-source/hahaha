@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useReducer, useRef, type ReactNode } from 'react';
 import { FilterState, SortConfig, SortField, SortDirection } from '@/types/filters';
+import BottomSheet from '@gorhom/bottom-sheet';
 
 interface SearchState {
   query: string;
@@ -77,15 +78,22 @@ function searchReducer(state: SearchState, action: SearchAction): SearchState {
 interface SearchContextValue {
   state: SearchState;
   dispatch: React.Dispatch<SearchAction>;
+  filterSheetRef: React.RefObject<BottomSheet | null>;
+  openFilterSheet: () => void;
 }
 
 const SearchContext = createContext<SearchContextValue | null>(null);
 
 export function SearchProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(searchReducer, initialState);
+  const filterSheetRef = useRef<BottomSheet>(null);
+
+  const openFilterSheet = useCallback(() => {
+    filterSheetRef.current?.snapToIndex(0);
+  }, []);
 
   return (
-    <SearchContext.Provider value={{ state, dispatch }}>
+    <SearchContext.Provider value={{ state, dispatch, filterSheetRef, openFilterSheet }}>
       {children}
     </SearchContext.Provider>
   );
